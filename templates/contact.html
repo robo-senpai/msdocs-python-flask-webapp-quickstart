@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Contact Us</h1>
+<form method="POST">
+  <input type="text" name="name" placeholder="Your Name" class="input" />
+  <textarea name="message" placeholder="Your Message" class="textarea"></textarea>
+  <button type="submit" class="button is-primary">Send</button>
+</form>
+{% for message in get_flashed_messages(category_filter=["success", "danger"]) %}
+  <div class="notification is-{{ message[0] }}">{{ message }}</div>
+{% endfor %}
+{% endblock %}
