@@ -1,49 +1,52 @@
 {% extends "layout.html" %}
+
 {% block content %}
   <h2 class="title">Workout</h2>
-  <form method="POST">
+  <form id="workout-form">
     <div class="field">
       <label class="label">Exercise Name</label>
-      <input class="input" type="text" name="exercise_name" value="{{ name }}" required>
+      <input class="input" type="text" id="exercise_name" required>
     </div>
     <div class="field">
       <label class="label">Duration (minutes)</label>
-      <input class="input" type="number" name="duration" min="1" max="60" value="{{ minutes or 5 }}" required>
+      <input class="input" type="number" id="duration" min="1" max="60" required>
     </div>
-    <button class="button is-link" type="submit">Start</button>
+    <button type="button" class="button is-link" id="start-button">Start</button>
   </form>
 
-  {% if minutes > 0 %}
-    <hr>
-    <h3>Exercise: {{ name }}</h3>
-    <div id="timer" style="font-size: 2em;">{{ minutes }}:00</div>
-    <button class="button is-warning" onclick="toggleTimer()">▶️ Start / Pause</button>
-  {% endif %}
+  <div id="timer" style="font-size: 2em; margin-top: 20px;">00:00</div>
 {% endblock %}
 
 {% block scripts %}
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
   <script>
-    let totalSeconds = {{ minutes }} * 60;
-    let timerInterval = null;
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    var timerInterval;
+    
+    // When the 'Start' button is clicked
+    document.getElementById('start-button').addEventListener('click', function() {
+      var exerciseName = document.getElementById('exercise_name').value;
+      var duration = document.getElementById('duration').value;
+      
+      // Start the timer from the server
+      socket.emit('start_timer', { 'exercise_name': exerciseName, 'duration': duration });
+    });
 
-    function toggleTimer() {
-      if (timerInterval) {
+    // Listen for updates from the server (timer updates)
+    socket.on('timer_update', function(data) {
+      var remainingTime = data.remaining_time;
+      var minutes = Math.floor(remainingTime / 60);
+      var seconds = remainingTime % 60;
+      
+      // Update the timer display in the browser
+      document.getElementById('timer').textContent = 
+        minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+      
+      // Stop the timer if it's done
+      if (remainingTime <= 0) {
         clearInterval(timerInterval);
-        timerInterval = null;
-        return;
+        alert("Time's up!");
       }
-      timerInterval = setInterval(() => {
-        if (totalSeconds <= 0) {
-          clearInterval(timerInterval);
-          alert("Time's up!");
-          return;
-        }
-        totalSeconds--;
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        document.getElementById('timer').textContent =
-          `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      }, 1000);
-    }
+    });
   </script>
 {% endblock %}
