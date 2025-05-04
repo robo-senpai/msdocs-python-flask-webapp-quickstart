@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+{% block content %}
+  <h2 class="title">Workout</h2>
+  <form method="POST">
+    <div class="field">
+      <label class="label">Exercise Name</label>
+      <input class="input" type="text" name="exercise_name" value="{{ name }}" required>
+    </div>
+    <div class="field">
+      <label class="label">Duration (minutes)</label>
+      <input class="input" type="number" name="duration" min="1" max="60" value="{{ minutes or 5 }}" required>
+    </div>
+    <button class="button is-link" type="submit">Start</button>
+  </form>
+
+  {% if minutes > 0 %}
+    <hr>
+    <h3>Exercise: {{ name }}</h3>
+    <div id="timer" style="font-size: 2em;">{{ minutes }}:00</div>
+    <button class="button is-warning" onclick="toggleTimer()">▶️ Start / Pause</button>
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    let totalSeconds = {{ minutes }} * 60;
+    let timerInterval = null;
+
+    function toggleTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        return;
+      }
+      timerInterval = setInterval(() => {
+        if (totalSeconds <= 0) {
+          clearInterval(timerInterval);
+          alert("Time's up!");
+          return;
+        }
+        totalSeconds--;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        document.getElementById('timer').textContent =
+          `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+  </script>
+{% endblock %}
